@@ -1,21 +1,38 @@
 "use client";
-import { useState, SyntheticEvent } from "react";
+import { useState, useEffect, SyntheticEvent } from "react";
 import { RiAddLargeLine } from "react-icons/ri";
 import type { Brand } from "@prisma/client";
 import { useRouter } from "next/navigation";
-import axios from "axios";
-import SuccessNotif from "../components/success_notif";
+import axios, { AxiosResponse } from "axios";
+import NotifAlert from "../components/notif_alert";
 import { FaCheckCircle } from "react-icons/fa";
-
-let isAdded: boolean = false;
+import { FaTimesCircle } from "react-icons/fa";
 
 const AddProduct = ({ brands }: { brands: Brand[] }) => {
-    const [isOpen, setIsOpen] = useState(false);
+    let response: AxiosResponse;
+    
+    const [error, setError] = useState("");
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState("");
     const [brand, setBrand] = useState("");
+    const [isOpen, setIsOpen] = useState(false);
+    const [isAdded, setIsAdded] = useState(false);
+    const [isError, setIsError] = useState(false);
+    const [addedTitle, setAddedTitle] = useState("");
 
     const router = useRouter();
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsError(false);
+        }, 5000);
+
+        return () => clearTimeout(timer);
+    }, [isError])
+
+    function handleIsError() {
+        setIsError(false);
+    }
 
     const handleModal = () => {
         setIsOpen(!isOpen);
@@ -39,7 +56,7 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
 
         try {
             // Melakukan permintaan POST ke API
-            const response = await axios.post('/api/products', {
+            response = await axios.post('/api/products', {
                 title: title,
                 price: Number(formattedPrice),
                 brandId: Number(brand)
@@ -47,7 +64,8 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
 
             // Jika berhasil, lakukan sesuatu, misalnya menampilkan pesan sukses
             if (response.status === 201 || response.status === 200) {
-                isAdded = true;
+                setIsAdded(true);
+                setAddedTitle(title);
 
                 // Reset form input
                 setTitle("");
@@ -61,18 +79,49 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
         } catch (error) {
             // Jika gagal, tampilkan pesan kesalahan
             if (axios.isAxiosError(error)) {
-                console.error("Error:", error.response?.data);
-                alert("Gagal menambahkan produk. Silakan coba lagi.");
+                if (error.response?.status === 409) {
+                    const errorMessage = error.response?.data.error;
+                    setError(errorMessage);
+                    setIsError(true);
+                    console.error("Error:", errorMessage);
+
+                    // Reset form input
+                    setTitle("");
+                    setPrice("");
+                    setBrand("");
+                }
             } else {
+                setError("An unexpected error occurred.")
+                setIsError(true);
                 console.error("Unexpected error:", error);
-                alert("Terjadi kesalahan tak terduga.");
+
+                // Reset form input
+                setTitle("");
+                setPrice("");
+                setBrand("");
             }
         }
     }
 
     return (
         <div>
-            {isAdded ? <SuccessNotif icon={<FaCheckCircle className="size-8 text-success" />} title="Success" subtitle="You added 1 new product successfully!" state={true} /> : null}
+            {isAdded ? (
+                <NotifAlert
+                    icon={<FaCheckCircle className="size-8 text-success" />}
+                    title="Success"
+                    subtitle={`You added ${addedTitle}!`}
+                    state={true}
+                />
+            ) : isError ? (
+                <NotifAlert
+                    icon={<FaTimesCircle className="size-8 text-error" />}
+                    title="Failed"
+                    subtitle={error}
+                    state={true}
+                    whenClose={handleIsError}
+                />
+            ) : null}
+
             <button type="button" className="btn btn-neutral" onClick={handleModal}>
                 <RiAddLargeLine className='inline-block me-2' />
                 Add New
@@ -116,4 +165,3 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
 }
 
 export default AddProduct;
-export { isAdded };
