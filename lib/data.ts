@@ -1,43 +1,45 @@
-import { PrismaClient } from "@prisma/client/extension";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const ITEMS_PER_PAGE = 6;
 
 // Fungsi untuk mendapatkan daftar produk berdasarkan pagination
-export const getProducts = async (
-  page: number,
-  itemsPerPage: number = ITEMS_PER_PAGE
-) => {
-  const skip = (page - 1) * itemsPerPage;
-  const products = await prisma.product.findMany({
-    skip: skip,
-    take: itemsPerPage,
+export const getProducts = async () => {
+  // const skip = (page - 1) * perPage;
+  const res = await prisma.product.findMany({
+    // skip: skip,
+    // take: perPage,
     orderBy: {
       id: "asc", // Mengurutkan produk berdasarkan ID secara ascending
     },
     select: {
-      id: true, // Mengambil ID produk
-      title: true, // Mengambil judul produk
-      price: true, // Mengambil harga produk
-      brandId: true, // Mengambil ID merek produk
+      id: true,
+      title: true,
+      price: true,
+      brandId: true,
       brand: {
-        // Mengambil informasi merek terkait
+        // Menggunakan select untuk menyertakan data brand
         select: {
           id: true,
           name: true,
         },
       },
     },
-    include: {
-        brand: true
-    }
   });
-  return products;
+  return res;
 };
 
 // Fungsi untuk menghitung jumlah halaman yang diperlukan berdasarkan jumlah produk
 export const getProductPages = async () => {
   const productsCount = await prisma.product.count();
-  const totalPages = Math.ceil(productsCount / ITEMS_PER_PAGE);
+  console.log(productsCount);
+  const totalPages = Math.ceil(productsCount / 6);
   return totalPages;
 };
+
+// Fungsi untuk mendapatkan list brand
+export const getBrands = async () => {
+  const res = await prisma.brand.findMany();
+  return res;
+};
+
+getProductPages();

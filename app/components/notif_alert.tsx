@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LiaTimesSolid } from "react-icons/lia";
 
 const NotifAlert = ({ icon, title, subtitle, duration = 5000, state = false, whenClose }: { icon: JSX.Element, title: string, subtitle: string, duration?: number, state?: boolean, whenClose?: () => void }) => {
     const [isVisible, setIsVisible] = useState(state);
@@ -24,7 +23,7 @@ const NotifAlert = ({ icon, title, subtitle, duration = 5000, state = false, whe
     if (isVisible == false) return null;
 
     return (
-        <div id="toast-message-cta toast-top-right" className="fixed bg-[#6D6D6D]/25 backdrop-blur-sm top-10 right-10 w-fit max-w-xs p-4 text-gray-500 rounded-lg shadow" role="alert">
+        <div id="toast-message-cta toast-top-right" className="fixed z-999 bg-[#6D6D6D]/25 backdrop-blur-sm top-10 right-10 w-fit max-w-xs p-4 text-gray-500 rounded-lg shadow" role="alert">
             <div className="flex">
                 {icon}
                 <div className="ms-3 text-sm font-normal">

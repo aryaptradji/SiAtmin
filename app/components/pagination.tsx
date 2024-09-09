@@ -1,28 +1,28 @@
 "use client";
 
-import Link from "next/link";
 import { HiChevronLeft, HiChevronRight } from "react-icons/hi";
-import { usePathname, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
+import { useRouter } from "next/navigation";
 
-const generatePagination = (currentPage: number, totalPages: number) => {
+const generatePagination = (currentPage: string, totalPages: number) => {
     if (totalPages <= 7) {
         return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
 
-    if (currentPage <= 3) {
+    if (Number(currentPage) <= 3) {
         return [1, 2, 3, "...", totalPages - 1, totalPages];
     }
 
-    if (currentPage >= totalPages - 2) {
+    if (Number(currentPage) >= totalPages - 2) {
         return [1, 2, 3, "...", totalPages - 2, totalPages - 1, totalPages];
     }
 
     return [
         1,
         "...",
-        currentPage - 1,
-        currentPage,
+        Number(currentPage) - 1,
+        Number(currentPage),
         currentPage + 1,
         "...",
         totalPages,
@@ -30,36 +30,29 @@ const generatePagination = (currentPage: number, totalPages: number) => {
 };
 
 const Pagination = ({ totalPages }: { totalPages: number }) => {
-    const pathname = usePathname();
+    const router = useRouter();
     const searchParams = useSearchParams();
-    const currentPage = Number(searchParams.get("page")) || 1;
-
-    const createPageURL = (pageNumber: string | number) => {
-        const params = new URLSearchParams(searchParams);
-        params.set("page", pageNumber.toString());
-        return `${pathname}?${params.toString()}`;
-    };
+    const currentPage = searchParams.get("page") || "1"
+    const perPage = searchParams.get("perPage") || "6"
 
     const allPages = generatePagination(currentPage, totalPages);
 
     const PaginationNumber = ({
         page,
-        href,
+        onClick,
         position,
         isActive,
     }: {
         page: number | string;
-        href: string;
+        onClick: () => void;
         position?: "first" | "last" | "middle" | "single";
         isActive: boolean;
     }) => {
         const className = clsx(
-            "flex h-10 w-10 items-center justify-center text-sm border",
+            "flex h-10 w-10 items-center justify-center text-sm",
             {
-                "rounded-l-sm": position === "first" || position === "single",
-                "rounded-r-sm": position === "last" || position === "single",
-                "z-10 bg-blue-100 border-blue-500 text-white": isActive,
-                "hover:bg-gray-100": !isActive && position !== "middle",
+                "z-10 bg-[#DCA54C] text-black": isActive,
+                "hover:bg-[#3b2b02]": !isActive && position !== "middle",
                 "text-gray-300 pointer-events-none": position === "middle",
             }
         );
@@ -67,28 +60,30 @@ const Pagination = ({ totalPages }: { totalPages: number }) => {
         return isActive && position === "middle" ? (
             <div className={className}>{page}</div>
         ) : (
-            <Link href={href} className={className}>
+            <button onClick={onClick} className={className}>
                 {page}
-            </Link>
+            </button>
         );
     };
 
     const PaginationArrow = ({
-        href,
+        onClickR,
+        onClickL,
         direction,
         isDisabled,
     }: {
-        href: string;
+        onClickR?: () => void;
+        onClickL?: () => void;
         direction: "left" | "right";
         isDisabled?: boolean;
     }) => {
         const className = clsx(
-            "flex h-10 w-10 items-center justify-center text-sm border",
+            "flex h-10 w-10 items-center justify-center text-sm",
             {
                 "pointer-events-none text-gray-300": isDisabled,
-                "hover:bg-gray-100": !isDisabled,
-                "mr-2": direction === "left",
-                "ml-2": direction === "right",
+                "hover:bg-[#3b2b02]": !isDisabled,
+                "rounded-r-lg": direction === "right",
+                "rounded-l-lg": direction === "left",
             }
         );
 
@@ -101,19 +96,25 @@ const Pagination = ({ totalPages }: { totalPages: number }) => {
 
         return isDisabled ? (
             <div className={className}>{icon}</div>
-        ) : (
-            <Link href={href} className={className}>
+        ) : direction === "right" ? (
+            <button onClick={onClickR} className={className}>
                 {icon}
-            </Link>
-        );
+            </button>
+        ) : (
+            <button onClick={onClickL} className={className}>
+                {icon}
+            </button>
+        )
     };
 
     return (
-        <div className="inline-flex">
+        <div className="inline-flex bg-[#212121] rounded-lg shadow-xl custom-shadow">
             <PaginationArrow
                 direction="left"
-                href={createPageURL(currentPage - 1)}
-                isDisabled={currentPage <= 1}
+                onClickL={() => {
+                    router.push(`/?page=${Number(currentPage) - 1}&perPage=${perPage}`)
+                }}
+                isDisabled={Number(currentPage) <= 1}
             />
 
             <div className="flex -space-x-px">
@@ -128,10 +129,12 @@ const Pagination = ({ totalPages }: { totalPages: number }) => {
                     return (
                         <PaginationNumber
                             key={index}
-                            href={createPageURL(page)}
+                            onClick={() => {
+                                router.push(`/?page=${page}&perPage=${perPage}`)
+                            }}
                             page={page}
                             position={position}
-                            isActive={currentPage === page}
+                            isActive={Number(currentPage) === Number(page)}
                         />
                     );
                 })}
@@ -139,8 +142,10 @@ const Pagination = ({ totalPages }: { totalPages: number }) => {
 
             <PaginationArrow
                 direction="right"
-                href={createPageURL(currentPage + 1)}
-                isDisabled={currentPage >= totalPages}
+                onClickR={() => {
+                    router.push(`/?page=${Number(currentPage) + 1}&perPage=${perPage}`)
+                }}
+                isDisabled={Number(currentPage) >= totalPages}
             />
         </div>
     );

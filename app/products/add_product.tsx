@@ -48,6 +48,8 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
         setPrice(value.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
     };
 
+    
+
     const handleSubmit = async (e: SyntheticEvent) => {
         e.preventDefault();
 
@@ -89,6 +91,7 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
                     setTitle("");
                     setPrice("");
                     setBrand("");
+                    setIsOpen(false);
                 }
             } else {
                 setError("An unexpected error occurred.")
@@ -128,12 +131,12 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
             </button>
 
             <div className={isOpen ? "modal modal-open" : "modal"}>
-                <div className="modal-box">
+                <div className="modal-box bg-[#212121]">
                     <h3 className="font-bold text-lg">Add New Product</h3>
                     <form onSubmit={handleSubmit}>
                         <div className="form-control w-full">
                             <label className="label font-bold">Product Name</label>
-                            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input input-bordered" placeholder="Enter product name..." />
+                            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input input-bordered capitalize" placeholder="Enter product name..." />
                         </div>
                         <div className="form-control w-full">
                             <label className="label font-bold">Price</label>
