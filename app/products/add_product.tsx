@@ -54,14 +54,22 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
         setPrice(value.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
     };
 
-    function validateTitle(value: string) {
+    function validateTitle(e: React.ChangeEvent<HTMLInputElement>) {
+        setTitle(e.target.value);
         const regex10Words = /^([A-Za-z]+ ?){1,3}$/;
 
-        if (regex10Words.test(value) === false) {
-            setErrorTitleField("Product name has maximum of 10 words")
+        if (title.length === 0) {
+            setErrorTitleField("This field is required");
             setIsErrorTitleField(true);
+            return false;
+        } else if (!regex10Words.test(title)) {
+            setErrorTitleField("This field has maximum of 10 words");
+            setIsErrorTitleField(true);
+            return false;
+        } else {
+            setIsErrorTitleField(false);
+            return true;
         }
-        setIsErrorTitleField(false);
     }
 
     const handleSubmit = async (e: SyntheticEvent) => {
@@ -150,10 +158,7 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
                     <form onSubmit={handleSubmit}>
                         <div className="form-control w-full">
                             <label className="label font-bold">Product Name</label>
-                            <input type="text" value={title} onChange={(e) => {
-                                setTitle(e.target.value);
-                                validateTitle(title);
-                            }} className={isErrorTitleField ? "input input-bordered input-error text-error capitalize" : "input input-bordered capitalize"} placeholder="Enter product name..." />
+                            <input type="text" value={title} onChange={validateTitle} className={isErrorTitleField ? "input input-bordered input-error text-error capitalize" : "input input-bordered capitalize"} placeholder="Enter product name..." />
                             {isErrorTitleField ? <p className="mt-2 mb-1 text-sm text-error">{errorTitleField}</p> : null}
                         </div>
                         <div className="form-control w-full">
