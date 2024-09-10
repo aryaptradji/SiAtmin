@@ -10,7 +10,7 @@ import { FaTimesCircle } from "react-icons/fa";
 
 const AddProduct = ({ brands }: { brands: Brand[] }) => {
     let response: AxiosResponse;
-    
+
     const [error, setError] = useState("");
     const [title, setTitle] = useState("");
     const [price, setPrice] = useState("");
@@ -19,6 +19,12 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
     const [isAdded, setIsAdded] = useState(false);
     const [isError, setIsError] = useState(false);
     const [addedTitle, setAddedTitle] = useState("");
+    const [errorTitleField, setErrorTitleField] = useState("");
+    const [errorPriceField, setErrorPriceField] = useState("");
+    const [errorBrandField, setErrorBrandField] = useState("");
+    const [isErrorTitleField, setIsErrorTitleField] = useState(false);
+    const [isErrorPriceField, setIsErrorPriceField] = useState(false);
+    const [isErrorBrandField, setIsErrorBrandField] = useState(false);
 
     const router = useRouter();
 
@@ -48,7 +54,15 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
         setPrice(value.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
     };
 
-    
+    function validateTitle(value: string) {
+        const regex10Words = /^([A-Za-z]+ ?){1,3}$/;
+
+        if (regex10Words.test(value) === false) {
+            setErrorTitleField("Product name has maximum of 10 words")
+            setIsErrorTitleField(true);
+        }
+        setIsErrorTitleField(false);
+    }
 
     const handleSubmit = async (e: SyntheticEvent) => {
         e.preventDefault();
@@ -136,7 +150,11 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
                     <form onSubmit={handleSubmit}>
                         <div className="form-control w-full">
                             <label className="label font-bold">Product Name</label>
-                            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} className="input input-bordered capitalize" placeholder="Enter product name..." />
+                            <input type="text" value={title} onChange={(e) => {
+                                setTitle(e.target.value);
+                                validateTitle(title);
+                            }} className={isErrorTitleField ? "input input-bordered input-error text-error capitalize" : "input input-bordered capitalize"} placeholder="Enter product name..." />
+                            {isErrorTitleField ? <p className="mt-2 mb-1 text-sm text-error">{errorTitleField}</p> : null}
                         </div>
                         <div className="form-control w-full">
                             <label className="label font-bold">Price</label>

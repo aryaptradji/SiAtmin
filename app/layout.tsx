@@ -17,10 +17,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${inter.className} py-10 px-10 bg-[#191919]`}>
+    <html lang="en" className="bg-[#191919]">
+      <body className={`${inter.className} py-10 px-10`}>
         {children}
-      </body>
+      </body>   
     </html>
   );
 }
