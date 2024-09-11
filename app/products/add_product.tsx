@@ -57,15 +57,8 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
         setIsBrandEmpty(false);
     };
 
-    const handlePrice = (value: string) => {
-        // Menghapus semua karakter non-digit sebelum menambahkan format pemisah ribuan
-        const res = value.replace(/\D/g, '');
-        // Mengatur ulang state price dengan format pemisah ribuan
-        setPrice(res.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
-    };
-
     function validateTitle(value: string) {
-        const regex = /^([A-Za-z]+ ?){1,3}$/; // validasi max 10 kata
+        const regex = /^([A-Za-z]+ ?){1,10}$/; // validasi max 10 kata
         setTitle(value);
 
         if (!regex.test(title) && title.length > 1) {
@@ -78,7 +71,7 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
     }
 
     const handleEmptyTitle = (value: string) => {
-        if (value.length === 0) {
+        if (value.trim().length === 0) {
             setErrorEmptyTitle("This field is required");
             setIsTitleEmpty(true);
         } else {
@@ -88,7 +81,7 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
     }
 
     const handleEmptyPrice = (value: string) => {
-        if (value.length === 0) {
+        if (value.trim().length === 0) {
             setErrorEmptyPrice("This field is required");
             setIsPriceEmpty(true);
         } else {
@@ -98,13 +91,40 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
     }
 
     const handleEmptyBrand = (value: string) => {
-        if (value == "0") {
+        if (value === "" || Number(value) === 0) {
             setErrorEmptyBrand("This field is required");
             setIsBrandEmpty(true);
         } else {
             setErrorEmptyBrand("");
             setIsBrandEmpty(false);
         }
+    }
+
+    const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setTitle(value);
+
+        if (value.length > 1) {
+            handleEmptyTitle(value);
+        }
+    }
+
+    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Menghapus semua karakter non-digit sebelum menambahkan format pemisah ribuan
+        let value = e.target.value.replace(/\D/g, '');
+        // Mengatur ulang state price dengan format pemisah ribuan
+        value = value.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        setPrice(value);
+
+        if (value.length > 1) {
+            handleEmptyPrice(value);
+        }
+    };
+
+    const handleBrandChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        setBrand(value);
+        handleEmptyBrand(value); // Langsung validasi setelah perubahan
     }
 
     const handleSubmit = async (e: SyntheticEvent) => {
@@ -117,6 +137,8 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
         handleEmptyTitle(title);
         handleEmptyPrice(price);
         handleEmptyBrand(brand);
+
+        console.log(brand);
 
         if (!isTitleEmpty && !isPriceEmpty && !isBrandEmpty) {
             try {
@@ -200,12 +222,7 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
                     <form onSubmit={handleSubmit}>
                         <div className="form-control w-full mb-1">
                             <label className="label font-bold">Product Name</label>
-                            <input type="text" value={title} onChange={(e) => {
-                                validateTitle(e.target.value);
-                                if (title.length > 1) {
-                                    handleEmptyTitle(title);
-                                }
-                            }} className={isErrorTitleField || isTitleEmpty ? "input input-bordered input-error text-error capitalize" : "input input-bordered capitalize"} placeholder="Enter product name..." />
+                            <input type="text" value={title} onChange={handleTitleChange} className={isErrorTitleField || isTitleEmpty ? "input input-bordered input-error text-error capitalize" : "input input-bordered capitalize"} placeholder="Enter product name..." />
                             <p className="mt-2 text-sm text-error">{isErrorTitleField ? errorTitleField : isTitleEmpty ? errorEmptyTitle : null}</p>
                         </div>
                         <div className="form-control w-full mb-1">
@@ -214,23 +231,13 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
                                 <span className="flex items-center px-3 text-sm text-orange bg-neutral border border-neutral border-e-0 rounded-s-md">
                                     Rp
                                 </span>
-                                <input type="text" value={price} onChange={(e) => {
-                                    handlePrice(e.target.value);
-                                    if (price.length > 1) {
-                                        handleEmptyPrice(price);
-                                    }
-                                }} className={isPriceEmpty ? "input input-bordered input-error text-error w-full rounded-s-none inline-block" : "input input-bordered w-full rounded-s-none inline-block"} placeholder="Enter price..." />
+                                <input type="text" value={price} onChange={handlePriceChange} className={isPriceEmpty ? "input input-bordered input-error text-error w-full rounded-s-none inline-block" : "input input-bordered w-full rounded-s-none inline-block"} placeholder="Enter price..." />
                             </div>
                             <p className="mt-2 text-sm text-error">{isPriceEmpty ? errorEmptyPrice : null}</p>
                         </div>
                         <div className="form-control w-full mb-1">
                             <label className="label font-bold">Brand</label>
-                            <select value={brand} onChange={(e) => {
-                                setBrand(e.target.value);
-                                handleEmptyBrand(brand);
-                                console.log(typeof e.target.value);
-                                console.log(e.target.value);
-                            }} className={isBrandEmpty ? "select select-bordered select-error text-error" : "select select-bordered"}>
+                            <select value={brand} onChange={handleBrandChange} className={isBrandEmpty ? "select select-bordered select-error text-error" : "select select-bordered"}>
                                 <option value="" disabled>Select a Brand</option>
                                 {brands.map((brand) => (
                                     <option value={brand.id} key={brand.id}>{brand.name}</option>
