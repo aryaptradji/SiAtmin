@@ -18,13 +18,15 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [isAdded, setIsAdded] = useState(false);
     const [isError, setIsError] = useState(false);
+    const [isTitleEmpty, setIsTitleEmpty] = useState(false);
+    const [errorEmptyTitle, setErrorEmptyTitle] = useState("");
+    const [isPriceEmpty, setIsPriceEmpty] = useState(false);
+    const [errorEmptyPrice, setErrorEmptyPrice] = useState("");
+    const [isBrandEmpty, setIsBrandEmpty] = useState(false);
+    const [errorEmptyBrand, setErrorEmptyBrand] = useState("");
     const [addedTitle, setAddedTitle] = useState("");
     const [errorTitleField, setErrorTitleField] = useState("");
-    const [errorPriceField, setErrorPriceField] = useState("");
-    const [errorBrandField, setErrorBrandField] = useState("");
     const [isErrorTitleField, setIsErrorTitleField] = useState(false);
-    const [isErrorPriceField, setIsErrorPriceField] = useState(false);
-    const [isErrorBrandField, setIsErrorBrandField] = useState(false);
 
     const router = useRouter();
 
@@ -45,40 +47,65 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
         setTitle("");
         setPrice("");
         setBrand("");
+        setErrorTitleField("");
+        setIsErrorTitleField(false);
+        setErrorEmptyTitle("");
+        setErrorEmptyPrice("");
+        setErrorEmptyBrand("");
+        setIsTitleEmpty(false);
+        setIsPriceEmpty(false);
+        setIsBrandEmpty(false);
     };
 
-    const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handlePrice = (value: string) => {
         // Menghapus semua karakter non-digit sebelum menambahkan format pemisah ribuan
-        const value = e.target.value.replace(/\D/g, '');
+        const res = value.replace(/\D/g, '');
         // Mengatur ulang state price dengan format pemisah ribuan
-        setPrice(value.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+        setPrice(res.replace(/\B(?=(\d{3})+(?!\d))/g, ','));
     };
 
     function validateTitle(value: string) {
-        const regex10Words = /^([A-Za-z]+ ?){1,3}$/;
+        const regex = /^([A-Za-z]+ ?){1,3}$/; // validasi max 10 kata
+        setTitle(value);
 
-        if (value.length === 0) {
-            setErrorTitleField("This field is required");
-            setIsErrorTitleField(true);
-            return false;
-        } else if (!regex10Words.test(value)) {
+        if (!regex.test(title) && title.length > 1) {
             setErrorTitleField("This field has maximum of 10 words");
             setIsErrorTitleField(true);
-            return false;
         } else {
+            setErrorTitleField("");
             setIsErrorTitleField(false);
-            return true;
         }
     }
 
-    function handleTitleChange(e: React.ChangeEvent<HTMLInputElement>) {
-        setTitle(e.target.value);
-        
-        if(title.length > 1) {
-            validateTitle(title);
+    const handleEmptyTitle = (value: string) => {
+        if (value.length === 0) {
+            setErrorEmptyTitle("This field is required");
+            setIsTitleEmpty(true);
+        } else {
+            setErrorEmptyTitle("");
+            setIsTitleEmpty(false);
         }
     }
 
+    const handleEmptyPrice = (value: string) => {
+        if (value.length === 0) {
+            setErrorEmptyPrice("This field is required");
+            setIsPriceEmpty(true);
+        } else {
+            setErrorEmptyPrice("");
+            setIsPriceEmpty(false);
+        }
+    }
+
+    const handleEmptyBrand = (value: string) => {
+        if (value == "0") {
+            setErrorEmptyBrand("This field is required");
+            setIsBrandEmpty(true);
+        } else {
+            setErrorEmptyBrand("");
+            setIsBrandEmpty(false);
+        }
+    }
 
     const handleSubmit = async (e: SyntheticEvent) => {
         e.preventDefault();
@@ -86,52 +113,59 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
         // Menghapus pemisah ribuan dari price sebelum submit
         const formattedPrice = price.replace(/,/g, '');
 
-        try {
-            // Melakukan permintaan POST ke API
-            response = await axios.post('/api/products', {
-                title: title,
-                price: Number(formattedPrice),
-                brandId: Number(brand)
-            });
+        // Memastikan tidak ada empty value
+        handleEmptyTitle(title);
+        handleEmptyPrice(price);
+        handleEmptyBrand(brand);
 
-            // Jika berhasil, lakukan sesuatu, misalnya menampilkan pesan sukses
-            if (response.status === 201 || response.status === 200) {
-                setIsAdded(true);
-                setAddedTitle(title);
+        if (!isTitleEmpty && !isPriceEmpty && !isBrandEmpty) {
+            try {
+                // Melakukan permintaan POST ke API
+                response = await axios.post('/api/products', {
+                    title: title,
+                    price: Number(formattedPrice),
+                    brandId: Number(brand)
+                });
 
-                // Reset form input
-                setTitle("");
-                setPrice("");
-                setBrand("");
-
-                // Refresh halaman atau data setelah berhasil
-                router.refresh();
-                setIsOpen(false);
-            }
-        } catch (error) {
-            // Jika gagal, tampilkan pesan kesalahan
-            if (axios.isAxiosError(error)) {
-                if (error.response?.status === 409) {
-                    const errorMessage = error.response?.data.error;
-                    setError(errorMessage);
-                    setIsError(true);
-                    console.error("Error:", errorMessage);
+                // Jika berhasil, lakukan sesuatu, misalnya menampilkan pesan sukses
+                if (response.status === 201 || response.status === 200) {
+                    setIsAdded(true);
+                    setAddedTitle(title);
 
                     // Reset form input
                     setTitle("");
                     setPrice("");
                     setBrand("");
+
+                    // Refresh halaman atau data setelah berhasil
+                    router.refresh();
                     setIsOpen(false);
                 }
-            } else {
-                setError("An unexpected error occurred.")
-                setIsError(true);
-                console.error("Unexpected error:", error);
+            } catch (error) {
+                // Jika gagal, tampilkan pesan kesalahan
+                if (axios.isAxiosError(error)) {
+                    if (error.response?.status === 409) {
+                        const errorMessage = error.response?.data.error;
+                        setError(errorMessage);
+                        setIsError(true);
+                        console.error("Error:", errorMessage);
 
-                // Reset form input
-                setTitle("");
-                setPrice("");
-                setBrand("");
+                        // Reset form input
+                        setTitle("");
+                        setPrice("");
+                        setBrand("");
+                        setIsOpen(false);
+                    }
+                } else {
+                    setError("An unexpected error occurred.")
+                    setIsError(true);
+                    console.error("Unexpected error:", error);
+
+                    // Reset form input
+                    setTitle("");
+                    setPrice("");
+                    setBrand("");
+                }
             }
         }
     }
@@ -164,29 +198,46 @@ const AddProduct = ({ brands }: { brands: Brand[] }) => {
                 <div className="modal-box bg-[#212121]">
                     <h3 className="font-bold text-lg">Add New Product</h3>
                     <form onSubmit={handleSubmit}>
-                        <div className="form-control w-full">
+                        <div className="form-control w-full mb-1">
                             <label className="label font-bold">Product Name</label>
-                            <input type="text" value={title} onChange={handleTitleChange} className={isErrorTitleField ? "input input-bordered input-error text-error capitalize" : "input input-bordered capitalize"} placeholder="Enter product name..." />
-                            {isErrorTitleField ? <p className="mt-2 mb-1 text-sm text-error">{errorTitleField}</p> : null}
+                            <input type="text" value={title} onChange={(e) => {
+                                validateTitle(e.target.value);
+                                if (title.length > 1) {
+                                    handleEmptyTitle(title);
+                                }
+                            }} className={isErrorTitleField || isTitleEmpty ? "input input-bordered input-error text-error capitalize" : "input input-bordered capitalize"} placeholder="Enter product name..." />
+                            <p className="mt-2 text-sm text-error">{isErrorTitleField ? errorTitleField : isTitleEmpty ? errorEmptyTitle : null}</p>
                         </div>
-                        <div className="form-control w-full">
+                        <div className="form-control w-full mb-1">
                             <label className="label font-bold">Price</label>
                             <div className="flex">
-                                <span className="inline-flex items-center px-3 text-sm text-orange bg-neutral border border-neutral border-e-0 rounded-s-md">
+                                <span className="flex items-center px-3 text-sm text-orange bg-neutral border border-neutral border-e-0 rounded-s-md">
                                     Rp
                                 </span>
-                                <input type="text" value={price} onChange={handlePriceChange} className="input input-bordered w-full rounded-s-none" placeholder="Enter price..." />
+                                <input type="text" value={price} onChange={(e) => {
+                                    handlePrice(e.target.value);
+                                    if (price.length > 1) {
+                                        handleEmptyPrice(price);
+                                    }
+                                }} className={isPriceEmpty ? "input input-bordered input-error text-error w-full rounded-s-none inline-block" : "input input-bordered w-full rounded-s-none inline-block"} placeholder="Enter price..." />
                             </div>
+                            <p className="mt-2 text-sm text-error">{isPriceEmpty ? errorEmptyPrice : null}</p>
                         </div>
-                        <div className="form-control w-full">
+                        <div className="form-control w-full mb-1">
                             <label className="label font-bold">Brand</label>
-                            <select value={brand} onChange={(e) => setBrand(e.target.value)} className="select select-bordered">
+                            <select value={brand} onChange={(e) => {
+                                setBrand(e.target.value);
+                                handleEmptyBrand(brand);
+                                console.log(typeof e.target.value);
+                                console.log(e.target.value);
+                            }} className={isBrandEmpty ? "select select-bordered select-error text-error" : "select select-bordered"}>
                                 <option value="" disabled>Select a Brand</option>
                                 {brands.map((brand) => (
                                     <option value={brand.id} key={brand.id}>{brand.name}</option>
                                 ))}
                             </select>
                         </div>
+                        <p className="mt-2 text-sm text-error">{isBrandEmpty ? errorEmptyBrand : null}</p>
                         <div className="modal-action">
                             <button type="button" className="btn" onClick={handleModal}>Close</button>
                             <button type="submit" className="btn btn-neutral">Save</button>

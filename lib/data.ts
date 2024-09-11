@@ -38,7 +38,15 @@ export const getProductPages = async () => {
 
 // Fungsi untuk mendapatkan list brand
 export const getBrands = async () => {
-  const res = await prisma.brand.findMany();
+  const res = await prisma.brand.findMany({
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: {
+      id: "asc"
+    }
+  });
   return res;
 };
 
